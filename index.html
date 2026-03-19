@@ -35,7 +35,9 @@
               autocomplete="nickname"
             />
             <button id="soundToggleButton" class="secondary-button" type="button">効果音: ON</button>
+            <button id="aiCommentaryToggleButton" class="secondary-button" type="button">AI実況: OFF</button>
             <p class="local-note">設定はこのブラウザだけに保存されます</p>
+            <p id="aiCommentaryStatus" class="local-note">ローカルLLM実況はOFFです。</p>
 
             <div class="photo-upload" aria-label="写真解析">
               <label class="nickname-label" for="photoInput">写真から元素を解析</label>
@@ -76,9 +78,20 @@
 
         <section id="stage" class="stage" aria-label="ゲームステージ"></section>
         <div id="startOverlay" class="start-overlay" aria-hidden="false">
+          <div class="start-energy" aria-hidden="true">
+            <span class="energy-ring"></span>
+            <span class="energy-ring"></span>
+            <span class="energy-ring"></span>
+            <span class="energy-orb"></span>
+            <span class="energy-orb"></span>
+            <span class="energy-orb"></span>
+            <span class="energy-orb"></span>
+          </div>
           <button id="startButton" class="start-button" type="button">スタート</button>
+          <p class="start-tagline" aria-hidden="true">準備OK? 最初の10秒で流れをつかもう。</p>
         </div>
         <p id="message" class="message">Startを押してゲーム開始</p>
+        <p id="aiCommentary" class="ai-commentary" aria-live="polite">AI実況をONにすると、ここに一言実況が表示されます。</p>
         <p id="resultTitle" class="result-title" aria-live="polite"></p>
 
         <section id="resultScreen" class="result-screen hidden" aria-label="結果画面" aria-hidden="true">

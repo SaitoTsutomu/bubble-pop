@@ -208,9 +208,36 @@ body {
 
 .elements-list {
   margin: 0;
-  padding-left: 18px;
-  line-height: 1.6;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
   font-size: 0.95rem;
+}
+
+.element-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #e9f7ff;
+}
+
+.element-list-symbol {
+  min-width: 40px;
+  text-align: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--element-chip-bg, rgba(134, 232, 255, 0.22));
+  border: 1px solid var(--element-chip-border, rgba(169, 240, 255, 0.48));
+  color: var(--element-chip-text, #effbff);
+  font-size: 0.83rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.element-list-detail {
+  color: rgba(223, 246, 255, 0.95);
 }
 
 .title-rules {
@@ -268,6 +295,8 @@ body {
   transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
   cursor: pointer;
   pointer-events: auto;
+  position: relative;
+  z-index: 1;
   animation: pulseStart 1450ms ease-in-out infinite;
 }
 
@@ -302,6 +331,12 @@ body {
   cursor: pointer;
 }
 
+.secondary-button.is-active {
+  border-color: rgba(255, 232, 171, 0.7);
+  background: rgba(238, 155, 0, 0.28);
+  color: #fff3ce;
+}
+
 .stage {
   position: relative;
   width: 100%;
@@ -310,6 +345,75 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.22);
   background: rgba(255, 255, 255, 0.06);
   overflow: hidden;
+}
+
+.stage.stage-idle {
+  background:
+    radial-gradient(circle at 12% 22%, rgba(174, 238, 255, 0.18), rgba(174, 238, 255, 0) 42%),
+    radial-gradient(circle at 85% 75%, rgba(84, 190, 255, 0.16), rgba(84, 190, 255, 0) 38%),
+    rgba(255, 255, 255, 0.05);
+}
+
+.stage.stage-idle::before {
+  content: "";
+  position: absolute;
+  inset: -24%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 20% 35%, rgba(160, 246, 255, 0.34), rgba(160, 246, 255, 0) 50%),
+    radial-gradient(ellipse at 72% 62%, rgba(76, 184, 255, 0.32), rgba(76, 184, 255, 0) 52%),
+    radial-gradient(ellipse at 52% 78%, rgba(198, 246, 255, 0.2), rgba(198, 246, 255, 0) 45%);
+  mix-blend-mode: screen;
+  animation: idleAuroraFlow 8.6s ease-in-out infinite alternate;
+}
+
+.stage.stage-element-hit {
+  box-shadow: inset 0 0 0 1px var(--hit-border-color, rgba(166, 233, 255, 0.9)), inset 0 0 48px var(--hit-glow-color, rgba(112, 209, 255, 0.24));
+  animation: stageElementHitFlash var(--hit-flash-duration, 260ms) cubic-bezier(0.14, 0.78, 0.2, 1) 1;
+}
+
+.stage.stage-element-hit::after {
+  content: "";
+  position: absolute;
+  inset: -12%;
+  z-index: 3;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.42;
+  background:
+    radial-gradient(circle at var(--hit-x, 50%) var(--hit-y, 50%), var(--hit-overlay-a, rgba(187, 241, 255, 0.7)) 0 18%, var(--hit-overlay-b, rgba(87, 191, 255, 0.2)) 40%, rgba(0, 0, 0, 0) 78%);
+  animation: stageHitOverlay var(--hit-flash-duration, 260ms) ease-out 1;
+}
+
+.stage.stage-element-hit.stage-hit-pattern-wave::after {
+  background:
+    repeating-radial-gradient(circle at var(--hit-x, 50%) var(--hit-y, 50%), var(--hit-overlay-a, rgba(187, 241, 255, 0.7)) 0 5px, rgba(0, 0, 0, 0) 5px 18px),
+    radial-gradient(circle at var(--hit-x, 50%) var(--hit-y, 50%), var(--hit-overlay-b, rgba(87, 191, 255, 0.2)) 0 40%, rgba(0, 0, 0, 0) 75%);
+}
+
+.stage.stage-element-hit.stage-hit-pattern-pulse::after {
+  background:
+    conic-gradient(from 0deg at var(--hit-x, 50%) var(--hit-y, 50%), var(--hit-overlay-a, rgba(187, 241, 255, 0.7)), rgba(0, 0, 0, 0), var(--hit-overlay-b, rgba(87, 191, 255, 0.2)), rgba(0, 0, 0, 0), var(--hit-overlay-a, rgba(187, 241, 255, 0.7)));
+}
+
+.stage.stage-element-hit.stage-hit-pattern-spark::after {
+  background:
+    repeating-conic-gradient(from 0deg at var(--hit-x, 50%) var(--hit-y, 50%), var(--hit-overlay-a, rgba(187, 241, 255, 0.7)) 0 8deg, rgba(0, 0, 0, 0) 8deg 20deg),
+    radial-gradient(circle at var(--hit-x, 50%) var(--hit-y, 50%), var(--hit-overlay-b, rgba(87, 191, 255, 0.2)) 0 42%, rgba(0, 0, 0, 0) 74%);
+}
+
+.stage.stage-element-hit.stage-hit-pattern-prism::after {
+  background:
+    radial-gradient(circle at var(--hit-x, 50%) var(--hit-y, 50%), rgba(0, 0, 0, 0) 0 20%, var(--hit-overlay-a, rgba(187, 241, 255, 0.7)) 40%, rgba(0, 0, 0, 0) 70%),
+    linear-gradient(35deg, rgba(0, 0, 0, 0) 18%, var(--hit-overlay-a, rgba(187, 241, 255, 0.7)) 50%, rgba(0, 0, 0, 0) 82%),
+    linear-gradient(125deg, rgba(0, 0, 0, 0) 16%, var(--hit-overlay-b, rgba(87, 191, 255, 0.2)) 50%, rgba(0, 0, 0, 0) 84%);
+}
+
+.stage.stage-element-hit.stage-hit-pattern-comet::after {
+  background:
+    radial-gradient(circle at var(--hit-x, 50%) var(--hit-y, 50%), var(--hit-overlay-a, rgba(187, 241, 255, 0.7)) 0 20%, rgba(0, 0, 0, 0) 58%),
+    linear-gradient(20deg, rgba(0, 0, 0, 0) 34%, var(--hit-overlay-b, rgba(87, 191, 255, 0.2)) 58%, rgba(0, 0, 0, 0) 86%);
 }
 
 .stage.stage-bad-hit {
@@ -391,6 +495,7 @@ body.screen-bad-hit .app {
   z-index: 2;
   display: grid;
   place-items: center;
+  gap: 14px;
   pointer-events: none;
 }
 
@@ -398,10 +503,99 @@ body.screen-bad-hit .app {
   display: none;
 }
 
+.start-energy {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(70vw, 460px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  filter: drop-shadow(0 0 26px rgba(122, 230, 255, 0.28));
+}
+
+.energy-ring,
+.energy-orb {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.energy-ring {
+  inset: 0;
+  border: 1px solid rgba(187, 241, 255, 0.5);
+  box-shadow: inset 0 0 40px rgba(114, 214, 255, 0.14), 0 0 18px rgba(114, 214, 255, 0.24);
+  animation: startRingExpand 2.8s ease-out infinite;
+}
+
+.energy-ring:nth-child(2) {
+  animation-delay: 0.9s;
+}
+
+.energy-ring:nth-child(3) {
+  animation-delay: 1.8s;
+}
+
+.energy-orb {
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(235, 252, 255, 0.72);
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.95), rgba(112, 214, 255, 0.45));
+  box-shadow: 0 0 18px rgba(123, 233, 255, 0.44);
+  left: calc(50% - 9px);
+  top: calc(50% - 9px);
+  animation-name: startOrbDrift;
+  animation-duration: var(--orbit-duration, 5.8s);
+  animation-delay: var(--orbit-delay, 0s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.energy-orb:nth-child(4) {
+  --orbit-radius: min(24vw, 170px);
+  --orbit-duration: 5.2s;
+  --orbit-delay: 0s;
+}
+
+.energy-orb:nth-child(5) {
+  --orbit-radius: min(28vw, 210px);
+  --orbit-duration: 6.1s;
+  --orbit-delay: -1.4s;
+}
+
+.energy-orb:nth-child(6) {
+  --orbit-radius: min(20vw, 140px);
+  --orbit-duration: 4.6s;
+  --orbit-delay: -0.8s;
+}
+
+.energy-orb:nth-child(7) {
+  --orbit-radius: min(31vw, 230px);
+  --orbit-duration: 7s;
+  --orbit-delay: -2.2s;
+}
+
+.start-tagline {
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: rgba(218, 247, 255, 0.96);
+  text-shadow: 0 2px 18px rgba(25, 64, 84, 0.45);
+  animation: startTaglineGlow 1.9s ease-in-out infinite;
+}
+
 .message {
   margin: 10px 0 6px;
   text-align: center;
   font-weight: 700;
+}
+
+.ai-commentary {
+  margin: 0 0 8px;
+  min-height: 1.4em;
+  text-align: center;
+  font-weight: 700;
+  color: #fff2c1;
+  text-shadow: 0 1px 14px rgba(64, 37, 0, 0.42);
 }
 
 .result-title {
@@ -484,13 +678,167 @@ body.screen-bad-hit .app {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+  display: grid;
+  justify-items: center;
+  gap: 1px;
   font-size: clamp(0.66rem, 1.6vw, 0.96rem);
-  line-height: 1.1;
+  line-height: 1;
   font-weight: 800;
-  color: rgba(11, 29, 41, 0.9);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+  color: var(--element-label-color, rgba(11, 29, 41, 0.9));
+  text-shadow: 0 0 6px var(--element-label-glow, rgba(120, 219, 255, 0.46)), 0 1px 0 rgba(255, 255, 255, 0.3);
   pointer-events: none;
   text-align: center;
+  animation: elementLabelPulse 1.4s ease-in-out infinite;
+  z-index: 2;
+}
+
+.bubble-element-symbol {
+  font-size: clamp(0.66rem, 1.6vw, 0.95rem);
+  letter-spacing: 0.02em;
+}
+
+.bubble-element-number {
+  font-size: clamp(0.56rem, 1.35vw, 0.8rem);
+  opacity: 0.9;
+}
+
+.bubble-element-aura,
+.bubble-element-flare {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  pointer-events: none;
+  border-radius: 999px;
+}
+
+.bubble-element-aura {
+  width: 58%;
+  height: 58%;
+  transform: translate(-50%, -50%) scale(0.84);
+  border: 1px solid var(--element-aura-soft, rgba(169, 238, 255, 0.62));
+  box-shadow: 0 0 10px var(--element-aura-strong, rgba(120, 215, 255, 0.58));
+  opacity: 0.72;
+  animation: elementAuraSpin 2.7s linear infinite;
+  z-index: 1;
+}
+
+.bubble-element-flare {
+  width: 72%;
+  height: 72%;
+  transform: translate(-50%, -50%);
+  background: conic-gradient(from 0deg, rgba(255, 255, 255, 0) 0 20%, var(--element-aura-soft, rgba(169, 238, 255, 0.62)) 45%, rgba(255, 255, 255, 0) 70%);
+  mix-blend-mode: screen;
+  opacity: 0.6;
+  animation: elementFlareRotate 2.1s linear infinite;
+  z-index: 1;
+}
+
+.bubble-element-pattern-wave .bubble-element-aura {
+  animation-duration: 3.3s;
+}
+
+.bubble-element-pattern-pulse .bubble-element-label {
+  animation-duration: 1s;
+}
+
+.bubble-element-pattern-spark .bubble-element-flare {
+  animation-duration: 1.4s;
+}
+
+.bubble-element-pattern-prism .bubble-element-flare {
+  background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, 0) 0 16deg, var(--element-aura-soft, rgba(169, 238, 255, 0.62)) 16deg 26deg);
+}
+
+.label-pattern-wave {
+  animation-name: elementLabelWave;
+}
+
+.label-pattern-pulse {
+  animation-name: elementLabelPulse;
+}
+
+.label-pattern-spark {
+  animation-name: elementLabelSpark;
+}
+
+.label-pattern-prism {
+  animation-name: elementLabelPrism;
+}
+
+.label-pattern-comet {
+  animation-name: elementLabelComet;
+}
+
+.label-enter-halo {
+  animation: elementLabelEnterHalo 340ms cubic-bezier(0.2, 0.86, 0.22, 1) 1, elementLabelPulse 1.4s ease-in-out 340ms infinite;
+}
+
+.label-enter-wave {
+  animation: elementLabelEnterWave 420ms cubic-bezier(0.18, 0.84, 0.22, 1) 1, elementLabelWave 1.5s ease-in-out 420ms infinite;
+}
+
+.label-enter-pulse {
+  animation: elementLabelEnterPulse 360ms cubic-bezier(0.16, 0.82, 0.2, 1) 1, elementLabelPulse 1.05s ease-in-out 360ms infinite;
+}
+
+.label-enter-spark {
+  animation: elementLabelEnterSpark 300ms cubic-bezier(0.24, 0.9, 0.26, 1) 1, elementLabelSpark 1.15s ease-in-out 300ms infinite;
+}
+
+.label-enter-prism {
+  animation: elementLabelEnterPrism 360ms cubic-bezier(0.18, 0.86, 0.22, 1) 1, elementLabelPrism 1.5s ease-in-out 360ms infinite;
+}
+
+.label-enter-comet {
+  animation: elementLabelEnterComet 380ms cubic-bezier(0.14, 0.84, 0.24, 1) 1, elementLabelComet 1.35s ease-in-out 380ms infinite;
+}
+
+.combo-chain-badge {
+  position: absolute;
+  z-index: 7;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.44);
+  background: rgba(7, 25, 40, 0.6);
+  color: var(--combo-text-color, #f2fbff);
+  font-size: clamp(0.72rem, 1.5vw, 0.95rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 8px var(--combo-glow, rgba(164, 233, 255, 0.9));
+  box-shadow: 0 4px 14px rgba(0, 15, 26, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  animation: comboChainBadgeRise 520ms cubic-bezier(0.18, 0.88, 0.22, 1) forwards;
+}
+
+.stage.stage-combo-hit {
+  box-shadow: inset 0 0 0 1px var(--combo-hit-color, rgba(160, 235, 255, 0.82)), inset 0 0 38px rgba(126, 222, 255, 0.32);
+  animation: stageComboHitFlash 320ms ease-out 1;
+}
+
+.label-glyph-piece {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  color: var(--glyph-color, rgba(239, 251, 255, 0.94));
+  text-shadow: 0 0 7px var(--glyph-glow, rgba(145, 222, 255, 0.74));
+  font-size: clamp(0.58rem, 1.3vw, 0.78rem);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  animation: labelGlyphBurst 480ms cubic-bezier(0.16, 0.84, 0.24, 1) forwards;
+}
+
+.label-glyph-piece.glyph-pattern-wave {
+  animation-duration: 520ms;
+}
+
+.label-glyph-piece.glyph-pattern-pulse {
+  animation-duration: 450ms;
+}
+
+.label-glyph-piece.glyph-pattern-spark {
+  animation-duration: 420ms;
 }
 
 .bubble-soft {
@@ -533,6 +881,14 @@ body.screen-bad-hit .app {
   background: radial-gradient(circle at 30% 30%, #ffffff 0%, #e3d8ff 34%, #9a8fe5 100%);
   border-color: rgba(240, 236, 255, 0.72);
   box-shadow: 0 10px 26px rgba(27, 22, 56, 0.22);
+}
+
+.bubble-element-themed {
+  background:
+    radial-gradient(circle at 28% 24%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 42%),
+    radial-gradient(circle at 30% 32%, var(--element-bubble-top, rgba(255, 255, 255, 0.94)) 0%, var(--element-bubble-mid, rgba(196, 236, 255, 0.8)) 34%, var(--element-bubble-bottom, rgba(98, 178, 255, 0.96)) 100%);
+  border-color: var(--element-aura-soft, rgba(207, 244, 255, 0.68));
+  box-shadow: 0 10px 26px rgba(0, 20, 30, 0.22), 0 0 0 1px rgba(207, 244, 255, 0.2);
 }
 
 .bubble::after {
@@ -586,9 +942,31 @@ body.screen-bad-hit .app {
   margin-left: calc(var(--size, 6px) * -0.5);
   margin-top: calc(var(--size, 6px) * -0.5);
   border-radius: 999px;
-  background: radial-gradient(circle at 28% 28%, rgba(255, 255, 255, 0.96), rgba(122, 199, 255, 0.78));
-  box-shadow: 0 0 6px rgba(178, 231, 255, 0.72);
-  animation: burstPiece 460ms cubic-bezier(0.22, 0.75, 0.25, 1) forwards;
+  background: radial-gradient(circle at 28% 28%, var(--burst-core, rgba(255, 255, 255, 0.96)), var(--burst-edge, rgba(122, 199, 255, 0.78)));
+  box-shadow: 0 0 2px var(--burst-glow, rgba(178, 231, 255, 0.72));
+  animation: burstPiece var(--burst-duration, 460ms) cubic-bezier(0.16, 0.86, 0.24, 1) forwards;
+}
+
+.burst-piece.burst-piece-wave {
+  border-radius: 28% 72% 64% 36% / 32% 40% 60% 68%;
+}
+
+.burst-piece.burst-piece-pulse {
+  border-radius: 22%;
+  transform-origin: center;
+}
+
+.burst-piece.burst-piece-spark {
+  border-radius: 18% 82% 28% 72% / 74% 26% 70% 30%;
+}
+
+.burst-piece.burst-piece-prism {
+  border-radius: 16%;
+  clip-path: polygon(50% 0%, 100% 35%, 82% 100%, 18% 100%, 0% 35%);
+}
+
+.burst-piece.burst-piece-comet {
+  border-radius: 80% 20% 55% 45% / 60% 40% 70% 30%;
 }
 
 .pop-ring {
@@ -597,9 +975,9 @@ body.screen-bad-hit .app {
   margin-left: calc(var(--ring-size, 36px) * -0.5);
   margin-top: calc(var(--ring-size, 36px) * -0.5);
   border-radius: 50%;
-  border: 2px solid rgba(214, 246, 255, 0.95);
-  box-shadow: 0 0 18px rgba(148, 233, 255, 0.48);
-  animation: popRing 320ms ease-out forwards;
+  border: 1px solid var(--ring-color, rgba(214, 246, 255, 0.95));
+  box-shadow: 0 0 6px var(--ring-glow, rgba(148, 233, 255, 0.48));
+  animation: popRing var(--ring-duration, 320ms) ease-out forwards;
 }
 
 .danger-splash {
@@ -675,24 +1053,262 @@ body.screen-bad-hit .app {
   }
 }
 
-@keyframes burstPiece {
+@keyframes elementAuraSpin {
+  from {
+    transform: translate(-50%, -50%) scale(0.84) rotate(0deg);
+    opacity: 0.66;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1) rotate(360deg);
+    opacity: 0.66;
+  }
+}
+
+@keyframes elementFlareRotate {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg) scale(0.88);
+    opacity: 0.44;
+  }
+  42% {
+    opacity: 0.72;
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg) scale(1.03);
+    opacity: 0.44;
+  }
+}
+
+@keyframes elementLabelPulse {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.08);
+    filter: brightness(1.1);
+  }
+}
+
+@keyframes elementLabelWave {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) translateY(0) scale(1);
+  }
+  35% {
+    transform: translate(-50%, -50%) translateY(-2px) scale(1.05);
+  }
+  65% {
+    transform: translate(-50%, -50%) translateY(1px) scale(0.97);
+  }
+}
+
+@keyframes elementLabelSpark {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.9;
+  }
+  45% {
+    transform: translate(-50%, -50%) scale(1.12);
+    opacity: 1;
+  }
+  55% {
+    transform: translate(-50%, -50%) scale(0.94);
+    opacity: 0.82;
+  }
+}
+
+@keyframes elementLabelPrism {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translate(-50%, -50%) rotate(-1.2deg) scale(1.04);
+  }
+  75% {
+    transform: translate(-50%, -50%) rotate(1.2deg) scale(1.04);
+  }
+}
+
+@keyframes elementLabelComet {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) translateX(0) scale(1);
+  }
+  30% {
+    transform: translate(-47%, -50%) scale(1.03);
+  }
+  60% {
+    transform: translate(-53%, -50%) scale(1.03);
+  }
+}
+
+@keyframes elementLabelEnterHalo {
   0% {
-    transform: translate3d(0, 0, 0) scale(0.65) rotate(0deg);
-    opacity: 0.96;
+    transform: translate(-50%, -50%) scale(0.35);
+    opacity: 0;
+    filter: brightness(1.3);
+  }
+  70% {
+    transform: translate(-50%, -50%) scale(1.16);
+    opacity: 1;
   }
   100% {
-    transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) scale(0.14) rotate(var(--rot, 0deg));
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes elementLabelEnterWave {
+  0% {
+    transform: translate(-50%, -46%) scale(0.42);
+    opacity: 0;
+  }
+  60% {
+    transform: translate(-50%, -54%) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes elementLabelEnterPulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0;
+  }
+  52% {
+    transform: translate(-50%, -50%) scale(1.24);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes elementLabelEnterSpark {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2) rotate(-10deg);
+    opacity: 0;
+    filter: brightness(1.4);
+  }
+  46% {
+    transform: translate(-50%, -50%) scale(1.2) rotate(7deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes elementLabelEnterPrism {
+  0% {
+    transform: translate(-50%, -50%) scale(0.28) rotate(-14deg);
+    opacity: 0;
+  }
+  66% {
+    transform: translate(-50%, -50%) scale(1.14) rotate(8deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes elementLabelEnterComet {
+  0% {
+    transform: translate(-64%, -50%) scale(0.4);
+    opacity: 0;
+    filter: blur(1.2px);
+  }
+  64% {
+    transform: translate(-46%, -50%) scale(1.12);
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes comboChainBadgeRise {
+  0% {
+    transform: translate(-50%, -50%) scale(0.76);
+    opacity: 0;
+  }
+  30% {
+    transform: translate(-50%, -72%) scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -118%) scale(0.98);
+    opacity: 0;
+  }
+}
+
+@keyframes stageComboHitFlash {
+  0% {
+    filter: saturate(1.08) brightness(1.08);
+  }
+  100% {
+    filter: saturate(1) brightness(1);
+  }
+}
+
+@keyframes labelGlyphBurst {
+  0% {
+    transform: translate(-50%, -50%) scale(0.6) rotate(0deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--glyph-tx, 0px)), calc(-50% + var(--glyph-ty, 0px))) scale(0.5) rotate(var(--glyph-rot, 0deg));
+    opacity: 0;
+  }
+}
+
+@keyframes burstPiece {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.74) rotate(0deg);
+    opacity: 0;
+  }
+  16% {
+    opacity: 0.76;
+  }
+  62% {
+    transform: translate3d(var(--tx-mid, 0px), var(--ty-mid, 0px), 0) scale(0.52) rotate(calc(var(--rot, 0deg) * 0.44));
+    opacity: 0.38;
+  }
+  100% {
+    transform: translate3d(var(--tx-end, 0px), var(--ty-end, 0px), 0) scale(0.36) rotate(var(--rot, 0deg));
     opacity: 0;
   }
 }
 
 @keyframes popRing {
   0% {
-    transform: scale(0.3);
-    opacity: 0.95;
+    transform: scale(0.56);
+    opacity: 0.62;
+  }
+  60% {
+    transform: scale(0.94);
+    opacity: 0.26;
   }
   100% {
-    transform: scale(1.65);
+    transform: scale(1.02);
     opacity: 0;
   }
 }
@@ -743,6 +1359,30 @@ body.screen-bad-hit .app {
   }
 }
 
+@keyframes stageElementHitFlash {
+  0% {
+    filter: saturate(1.05) brightness(1.03);
+  }
+  100% {
+    filter: saturate(1) brightness(1);
+  }
+}
+
+@keyframes stageHitOverlay {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.48;
+  }
+  72% {
+    transform: scale(0.98);
+    opacity: 0.2;
+  }
+  100% {
+    transform: scale(1.02);
+    opacity: 0;
+  }
+}
+
 @keyframes titleFloat {
   from {
     transform: translateY(0) scale(1);
@@ -775,6 +1415,64 @@ body.screen-bad-hit .app {
   }
   50% {
     transform: scale(1.03);
+  }
+}
+
+@keyframes startRingExpand {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.68;
+  }
+  70% {
+    opacity: 0.24;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes startOrbDrift {
+  from {
+    transform: rotate(0deg) translateX(var(--orbit-radius, 180px)) rotate(0deg) scale(0.95);
+    opacity: 0.88;
+  }
+  50% {
+    opacity: 0.56;
+  }
+  to {
+    transform: rotate(360deg) translateX(var(--orbit-radius, 180px)) rotate(-360deg) scale(1.06);
+    opacity: 0.88;
+  }
+}
+
+@keyframes startTaglineGlow {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes idleAuroraFlow {
+  0% {
+    transform: translate3d(-2%, 0, 0) rotate(0deg) scale(1);
+    opacity: 0.68;
+  }
+  50% {
+    transform: translate3d(2%, -2%, 0) rotate(2deg) scale(1.04);
+    opacity: 0.84;
+  }
+  100% {
+    transform: translate3d(3%, 1%, 0) rotate(-2deg) scale(1.07);
+    opacity: 0.62;
   }
 }
 
@@ -854,9 +1552,27 @@ body.screen-bad-hit .app {
 
   .start-overlay {
     inset: 76px 0 58px;
+    gap: 12px;
   }
 
   .start-button {
     padding: 16px 24px;
+  }
+
+  .start-energy {
+    width: min(90vw, 390px);
+  }
+
+  .energy-orb {
+    width: 14px;
+    height: 14px;
+    left: calc(50% - 7px);
+    top: calc(50% - 7px);
+  }
+
+  .start-tagline {
+    font-size: 0.9rem;
+    text-align: center;
+    padding-inline: 16px;
   }
 }
