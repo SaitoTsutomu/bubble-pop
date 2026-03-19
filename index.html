@@ -36,10 +36,28 @@
             />
             <button id="soundToggleButton" class="secondary-button" type="button">効果音: ON</button>
             <p class="local-note">設定はこのブラウザだけに保存されます</p>
+
+            <div class="photo-upload" aria-label="写真解析">
+              <label class="nickname-label" for="photoInput">写真から元素を解析</label>
+              <input id="photoInput" class="photo-input" type="file" accept="image/*" />
+              <button id="analyzePhotoButton" class="secondary-button" type="button">写真を解析する</button>
+              <p id="photoStatus" class="photo-status">写真を選ぶと、AI風解析で元素を推定します。</p>
+              <img id="photoPreview" class="photo-preview hidden" alt="アップロードした写真のプレビュー" />
+            </div>
           </div>
+          <section class="analysis-card" aria-label="解析された元素">
+            <h2 class="analysis-heading">推定された元素</h2>
+            <p id="elementScoreHint" class="analysis-hint">元素番号（原子番号）がそのまま得点になります。</p>
+            <ul id="elementsList" class="elements-list">
+              <li>H 1: 水素</li>
+              <li>C 6: 炭素</li>
+              <li>O 8: 酸素</li>
+            </ul>
+          </section>
           <ul class="title-rules" aria-label="遊び方">
             <li>泡をクリックしてスコアを稼ぐ</li>
             <li>制限時間は30秒</li>
+            <li>写真解析で選ばれた元素の番号が得点になる</li>
             <li>後半は左右からレーンが圧迫される</li>
             <li>赤い危険バブルを押すと、泡が無得点で全消しされる</li>
             <li>終了後はそのままリトライ可能</li>

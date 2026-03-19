@@ -9,6 +9,7 @@ const MAX_LANE_PRESSURE_RATIO = 0.32;
 const NICKNAME_STORAGE_KEY = "bubble-pop-nickname";
 const SOUND_STORAGE_KEY = "bubble-pop-sound-enabled";
 const DEFAULT_NICKNAME = "ゲスト";
+const ANALYZED_ELEMENT_COUNT = 6;
 const BUBBLE_VARIANTS = [
   { className: "bubble-soft", weight: 5 },
   { className: "bubble-mint", weight: 4 },
@@ -18,6 +19,27 @@ const BUBBLE_VARIANTS = [
   { className: "bubble-coral", weight: 1 },
   { className: "bubble-lilac", weight: 1 },
 ];
+const ELEMENT_CANDIDATES = [
+  { symbol: "H", name: "水素", number: 1, hue: 210, light: 0.9, sat: 0.2, edge: 0.2 },
+  { symbol: "C", name: "炭素", number: 6, hue: 20, light: 0.2, sat: 0.05, edge: 0.72 },
+  { symbol: "O", name: "酸素", number: 8, hue: 190, light: 0.72, sat: 0.72, edge: 0.45 },
+  { symbol: "Na", name: "ナトリウム", number: 11, hue: 36, light: 0.66, sat: 0.55, edge: 0.36 },
+  { symbol: "Mg", name: "マグネシウム", number: 12, hue: 200, light: 0.62, sat: 0.22, edge: 0.5 },
+  { symbol: "Al", name: "アルミニウム", number: 13, hue: 210, light: 0.56, sat: 0.12, edge: 0.54 },
+  { symbol: "Si", name: "ケイ素", number: 14, hue: 35, light: 0.5, sat: 0.35, edge: 0.63 },
+  { symbol: "P", name: "リン", number: 15, hue: 20, light: 0.48, sat: 0.64, edge: 0.58 },
+  { symbol: "S", name: "硫黄", number: 16, hue: 55, light: 0.76, sat: 0.78, edge: 0.34 },
+  { symbol: "Cl", name: "塩素", number: 17, hue: 104, light: 0.6, sat: 0.7, edge: 0.38 },
+  { symbol: "K", name: "カリウム", number: 19, hue: 266, light: 0.56, sat: 0.54, edge: 0.48 },
+  { symbol: "Ca", name: "カルシウム", number: 20, hue: 42, light: 0.74, sat: 0.36, edge: 0.42 },
+  { symbol: "Fe", name: "鉄", number: 26, hue: 12, light: 0.35, sat: 0.3, edge: 0.78 },
+  { symbol: "Cu", name: "銅", number: 29, hue: 22, light: 0.46, sat: 0.5, edge: 0.64 },
+  { symbol: "Zn", name: "亜鉛", number: 30, hue: 200, light: 0.58, sat: 0.2, edge: 0.54 },
+  { symbol: "Br", name: "臭素", number: 35, hue: 16, light: 0.24, sat: 0.66, edge: 0.52 },
+  { symbol: "Ag", name: "銀", number: 47, hue: 215, light: 0.72, sat: 0.08, edge: 0.52 },
+  { symbol: "I", name: "ヨウ素", number: 53, hue: 285, light: 0.38, sat: 0.64, edge: 0.5 },
+];
+const DEFAULT_ELEMENT_POOL = [ELEMENT_CANDIDATES[0], ELEMENT_CANDIDATES[1], ELEMENT_CANDIDATES[2]];
 
 const scoreEl = document.getElementById("score");
 const timeEl = document.getElementById("time");
@@ -31,6 +53,12 @@ const enterGameButtonEl = document.getElementById("enterGameButton");
 const backToTitleButtonEl = document.getElementById("backToTitleButton");
 const nicknameInputEl = document.getElementById("nicknameInput");
 const soundToggleButtonEl = document.getElementById("soundToggleButton");
+const photoInputEl = document.getElementById("photoInput");
+const analyzePhotoButtonEl = document.getElementById("analyzePhotoButton");
+const photoStatusEl = document.getElementById("photoStatus");
+const photoPreviewEl = document.getElementById("photoPreview");
+const elementsListEl = document.getElementById("elementsList");
+const elementScoreHintEl = document.getElementById("elementScoreHint");
 const playerNameDisplayEl = document.getElementById("playerNameDisplay");
 const resultTitleEl = document.getElementById("resultTitle");
 const resultScreenEl = document.getElementById("resultScreen");
@@ -55,9 +83,12 @@ let lanePressureRatio = 0;
 let lanePressureFrameId = null;
 let lanePressureLeftEl = null;
 let lanePressureRightEl = null;
+let selectedPhotoDataUrl = "";
+let activeElements = [...DEFAULT_ELEMENT_POOL];
 
 initSettings();
 initializeStageDecor();
+renderElementList(activeElements);
 
 function showTitleScreen() {
   titleScreenEl.classList.remove("hidden");
@@ -205,6 +236,8 @@ function spawnBubbleByType(isDangerBubble) {
     return;
   }
 
+  const selectedElement = isDangerBubble ? null : pickElementForBubble();
+
   const stageRect = stageEl.getBoundingClientRect();
   const size = isDangerBubble ? randomInRange(58, 94) : randomInRange(40, 98);
   const pressureMargin = Math.floor(stageRect.width * lanePressureRatio);
@@ -235,6 +268,13 @@ function spawnBubbleByType(isDangerBubble) {
   bubbleEl.style.setProperty("--drift-offset", `${driftOffset}px`);
   bubbleEl.setAttribute("aria-label", isDangerBubble ? "danger-bubble" : "bubble");
 
+  if (selectedElement) {
+    const labelEl = document.createElement("span");
+    labelEl.className = "bubble-element-label";
+    labelEl.textContent = `${selectedElement.symbol} ${selectedElement.number}`;
+    bubbleEl.appendChild(labelEl);
+  }
+
   bubbleEl.addEventListener("click", () => {
     if (!running) {
       return;
@@ -251,8 +291,12 @@ function spawnBubbleByType(isDangerBubble) {
     }
 
     createBurstEffect(bubbleEl, size);
-    score += 1;
+    const gainedScore = selectedElement ? selectedElement.number : 1;
+    score += gainedScore;
     scoreEl.textContent = String(score);
+    if (selectedElement) {
+      messageEl.textContent = `${selectedElement.name} (${selectedElement.symbol}) +${gainedScore}`;
+    }
     playTone(960, 0.045, "sine", 0.03);
     bubbleEl.classList.add("pop");
     setTimeout(() => {
@@ -337,6 +381,13 @@ function pickBubbleVariantClass() {
   }
 
   return BUBBLE_VARIANTS[0].className;
+}
+
+function pickElementForBubble() {
+  if (!activeElements.length) {
+    return DEFAULT_ELEMENT_POOL[randomInRange(0, DEFAULT_ELEMENT_POOL.length - 1)];
+  }
+  return activeElements[randomInRange(0, activeElements.length - 1)];
 }
 
 function initializeStageDecor() {
@@ -486,19 +537,250 @@ function randomInRange(min, max) {
 }
 
 function titleByScore(currentScore) {
-  if (currentScore >= 45) {
+  if (currentScore >= 700) {
     return "泡神";
   }
-  if (currentScore >= 35) {
+  if (currentScore >= 480) {
     return "泡マスター";
   }
-  if (currentScore >= 25) {
+  if (currentScore >= 300) {
     return "泡ハンター";
   }
-  if (currentScore >= 15) {
+  if (currentScore >= 160) {
     return "泡トレーニー";
   }
   return "泡ビギナー";
+}
+
+function renderElementList(elements) {
+  if (!elementsListEl) {
+    return;
+  }
+
+  elementsListEl.innerHTML = "";
+  for (const element of elements) {
+    const itemEl = document.createElement("li");
+    itemEl.textContent = `${element.symbol} ${element.number}: ${element.name}`;
+    elementsListEl.appendChild(itemEl);
+  }
+
+  if (elementScoreHintEl) {
+    const total = elements.reduce((sum, element) => sum + element.number, 0);
+    elementScoreHintEl.textContent = `元素番号（原子番号）が得点です。今回の候補合計は ${total} 点。`;
+  }
+}
+
+function circularHueDistance(hueA, hueB) {
+  const rawDistance = Math.abs(hueA - hueB);
+  return Math.min(rawDistance, 360 - rawDistance) / 180;
+}
+
+function normalizeValue(value, min, max) {
+  if (max <= min) {
+    return 0;
+  }
+  return Math.min(1, Math.max(0, (value - min) / (max - min)));
+}
+
+function pickTopHueFromHistogram(hueHistogram) {
+  let topIndex = 0;
+  let topValue = -1;
+  for (let index = 0; index < hueHistogram.length; index += 1) {
+    if (hueHistogram[index] > topValue) {
+      topValue = hueHistogram[index];
+      topIndex = index;
+    }
+  }
+  return topIndex * 30 + 15;
+}
+
+function rgbToHsl(red, green, blue) {
+  const normalizedRed = red / 255;
+  const normalizedGreen = green / 255;
+  const normalizedBlue = blue / 255;
+  const max = Math.max(normalizedRed, normalizedGreen, normalizedBlue);
+  const min = Math.min(normalizedRed, normalizedGreen, normalizedBlue);
+  const delta = max - min;
+
+  let hue = 0;
+  if (delta !== 0) {
+    if (max === normalizedRed) {
+      hue = ((normalizedGreen - normalizedBlue) / delta) % 6;
+    } else if (max === normalizedGreen) {
+      hue = (normalizedBlue - normalizedRed) / delta + 2;
+    } else {
+      hue = (normalizedRed - normalizedGreen) / delta + 4;
+    }
+  }
+
+  hue = Math.round(hue * 60);
+  if (hue < 0) {
+    hue += 360;
+  }
+
+  const light = (max + min) / 2;
+  const sat = delta === 0 ? 0 : delta / (1 - Math.abs(2 * light - 1));
+  return { hue, sat, light };
+}
+
+function extractImageFeatures(imageData) {
+  const { data, width, height } = imageData;
+  const hueHistogram = new Array(12).fill(0);
+  let lightSum = 0;
+  let satSum = 0;
+  let pixelCount = 0;
+  let edgeTotal = 0;
+  let edgeSamples = 0;
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const index = (y * width + x) * 4;
+      const red = data[index];
+      const green = data[index + 1];
+      const blue = data[index + 2];
+      const { hue, sat, light } = rgbToHsl(red, green, blue);
+
+      lightSum += light;
+      satSum += sat;
+      pixelCount += 1;
+
+      if (sat > 0.08) {
+        const hueBin = Math.floor(hue / 30) % 12;
+        hueHistogram[hueBin] += 1;
+      }
+
+      if (x < width - 1 && y < height - 1) {
+        const rightIndex = index + 4;
+        const bottomIndex = index + width * 4;
+        const rightDiff = Math.abs(red - data[rightIndex]) + Math.abs(green - data[rightIndex + 1]) + Math.abs(blue - data[rightIndex + 2]);
+        const bottomDiff = Math.abs(red - data[bottomIndex]) + Math.abs(green - data[bottomIndex + 1]) + Math.abs(blue - data[bottomIndex + 2]);
+        edgeTotal += rightDiff + bottomDiff;
+        edgeSamples += 2;
+      }
+    }
+  }
+
+  const dominantHue = pickTopHueFromHistogram(hueHistogram);
+  const avgLight = lightSum / Math.max(1, pixelCount);
+  const avgSat = satSum / Math.max(1, pixelCount);
+  const avgEdge = normalizeValue(edgeTotal / Math.max(1, edgeSamples), 0, 190);
+
+  return {
+    dominantHue,
+    avgLight,
+    avgSat,
+    avgEdge,
+  };
+}
+
+function chooseElementsFromFeatures(features) {
+  const scoredElements = ELEMENT_CANDIDATES.map((element, index) => {
+    const hueScore = 1 - circularHueDistance(features.dominantHue, element.hue);
+    const lightScore = 1 - Math.abs(features.avgLight - element.light);
+    const satScore = 1 - Math.abs(features.avgSat - element.sat);
+    const edgeScore = 1 - Math.abs(features.avgEdge - element.edge);
+    const tinyVariation = (index % 5) * 0.001;
+    const scoreValue = hueScore * 0.38 + lightScore * 0.22 + satScore * 0.24 + edgeScore * 0.16 + tinyVariation;
+    return { element, scoreValue };
+  });
+
+  scoredElements.sort((left, right) => right.scoreValue - left.scoreValue);
+  return scoredElements.slice(0, ANALYZED_ELEMENT_COUNT).map((entry) => entry.element);
+}
+
+function loadImageFromDataUrl(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("画像読み込みに失敗しました"));
+    image.src = dataUrl;
+  });
+}
+
+async function analyzePhotoToElements(dataUrl) {
+  const image = await loadImageFromDataUrl(dataUrl);
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+
+  if (!context) {
+    throw new Error("Canvasが利用できません");
+  }
+
+  const maxSide = 180;
+  const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+  canvas.width = Math.max(16, Math.floor(image.width * scale));
+  canvas.height = Math.max(16, Math.floor(image.height * scale));
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+  const features = extractImageFeatures(imageData);
+  return chooseElementsFromFeatures(features);
+}
+
+function handlePhotoInputChanged(event) {
+  const target = event.target;
+  if (!target || !target.files || target.files.length === 0) {
+    selectedPhotoDataUrl = "";
+    photoStatusEl.textContent = "写真が未選択です。デフォルト元素で遊べます。";
+    photoPreviewEl.classList.add("hidden");
+    photoPreviewEl.removeAttribute("src");
+    return;
+  }
+
+  const file = target.files[0];
+  if (!file.type.startsWith("image/")) {
+    selectedPhotoDataUrl = "";
+    photoStatusEl.textContent = "画像ファイルを選択してください。";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const nextDataUrl = typeof reader.result === "string" ? reader.result : "";
+    selectedPhotoDataUrl = nextDataUrl;
+    if (!selectedPhotoDataUrl) {
+      photoStatusEl.textContent = "写真の読み込みに失敗しました。";
+      return;
+    }
+
+    photoPreviewEl.src = selectedPhotoDataUrl;
+    photoPreviewEl.classList.remove("hidden");
+    photoStatusEl.textContent = "写真を読み込みました。「写真を解析する」を押してください。";
+  };
+  reader.onerror = () => {
+    selectedPhotoDataUrl = "";
+    photoStatusEl.textContent = "写真の読み込みに失敗しました。";
+  };
+  reader.readAsDataURL(file);
+}
+
+async function handleAnalyzePhotoClicked() {
+  if (!selectedPhotoDataUrl) {
+    photoStatusEl.textContent = "先に写真を選択してください。";
+    return;
+  }
+
+  analyzePhotoButtonEl.disabled = true;
+  photoStatusEl.textContent = "AI風に写真を解析中...";
+
+  try {
+    const analyzedElements = await analyzePhotoToElements(selectedPhotoDataUrl);
+    if (!analyzedElements.length) {
+      throw new Error("元素候補を作れませんでした");
+    }
+
+    activeElements = analyzedElements;
+    renderElementList(activeElements);
+    photoStatusEl.textContent = "解析完了! この元素セットがバブルに反映されます。";
+    messageEl.textContent = "写真解析の元素セットを適用しました";
+    playTone(760, 0.06, "triangle", 0.05);
+  } catch (error) {
+    activeElements = [...DEFAULT_ELEMENT_POOL];
+    renderElementList(activeElements);
+    photoStatusEl.textContent = "解析に失敗したため、デフォルト元素に切り替えました。";
+  } finally {
+    analyzePhotoButtonEl.disabled = false;
+  }
 }
 
 function initSettings() {
@@ -580,3 +862,5 @@ nicknameInputEl.addEventListener("change", (event) => {
 soundToggleButtonEl.addEventListener("click", toggleSound);
 retryFromResultButtonEl.addEventListener("click", retryFromResult);
 resultToTitleButtonEl.addEventListener("click", backToTitle);
+photoInputEl.addEventListener("change", handlePhotoInputChanged);
+analyzePhotoButtonEl.addEventListener("click", handleAnalyzePhotoClicked);
