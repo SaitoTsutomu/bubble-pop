@@ -494,7 +494,8 @@ body.screen-bad-hit .app {
   inset: 64px 0 56px;
   z-index: 2;
   display: grid;
-  place-items: center;
+  justify-items: center;
+  align-content: center;
   gap: 14px;
   pointer-events: none;
 }
@@ -928,6 +929,38 @@ body.screen-bad-hit .app {
   animation: drainOut 160ms ease-in forwards;
 }
 
+body.performance-lite .title-card,
+body.performance-lite .pill,
+body.performance-lite .result-screen {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+body.performance-lite .start-energy {
+  filter: none;
+}
+
+body.performance-lite .bubble-element-aura,
+body.performance-lite .bubble-element-flare {
+  display: none;
+}
+
+body.performance-lite .bubble-element-label {
+  animation: none;
+}
+
+body.performance-lite .stage.stage-bad-hit {
+  filter: none;
+}
+
+body.performance-lite .lane-pressure::after {
+  animation: none;
+}
+
+body.performance-lite .drain {
+  animation: drainOutLite 120ms ease-in forwards;
+}
+
 .burst-piece,
 .pop-ring {
   position: absolute;
@@ -1050,6 +1083,17 @@ body.screen-bad-hit .app {
     transform: scale(0.22);
     opacity: 0;
     filter: grayscale(1);
+  }
+}
+
+@keyframes drainOutLite {
+  from {
+    transform: scale(1);
+    opacity: 0.95;
+  }
+  to {
+    transform: scale(0.28);
+    opacity: 0;
   }
 }
 

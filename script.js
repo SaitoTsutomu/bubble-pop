@@ -5,11 +5,12 @@ const BURST_PIECE_COUNT = 9;
 const MAX_ACTIVE_BURST_PIECES = 160;
 const MAX_ACTIVE_LABEL_GLYPH_PIECES = 160;
 const PRESSURE_START_SECONDS = 7;
-const PRESSURE_FULL_SECONDS = 27;
-const MAX_LANE_PRESSURE_RATIO = 0.32;
+const PRESSURE_FULL_SECONDS = GAME_SECONDS + 1;
+const MAX_LANE_PRESSURE_RATIO = 0.4;
 const NICKNAME_STORAGE_KEY = "bubble-pop-nickname";
 const SOUND_STORAGE_KEY = "bubble-pop-sound-enabled";
 const AI_COMMENTARY_STORAGE_KEY = "bubble-pop-ai-commentary-enabled";
+const PERFORMANCE_MODE_STORAGE_KEY = "bubble-pop-performance-lite-enabled";
 const DEFAULT_NICKNAME = "ゲスト";
 const ANALYZED_ELEMENT_COUNT = 6;
 const AI_COMMENTARY_INTERVAL_MS = 6500;
@@ -136,6 +137,7 @@ const backToTitleButtonEl = document.getElementById("backToTitleButton");
 const nicknameInputEl = document.getElementById("nicknameInput");
 const soundToggleButtonEl = document.getElementById("soundToggleButton");
 const aiCommentaryToggleButtonEl = document.getElementById("aiCommentaryToggleButton");
+const performanceToggleButtonEl = document.getElementById("performanceToggleButton");
 const aiCommentaryStatusEl = document.getElementById("aiCommentaryStatus");
 const photoInputEl = document.getElementById("photoInput");
 const analyzePhotoButtonEl = document.getElementById("analyzePhotoButton");
@@ -168,6 +170,7 @@ let lanePressureRatio = 0;
 let lanePressureFrameId = null;
 let lanePressureLeftEl = null;
 let lanePressureRightEl = null;
+let lanePressureMessageState = "idle";
 let selectedPhotoDataUrl = "";
 let activeElements = [...DEFAULT_ELEMENT_POOL];
 let stageElementHitTimeoutId = null;
@@ -176,6 +179,7 @@ let comboElementSymbol = "";
 let comboStreak = 0;
 let activeLabelGlyphPieces = 0;
 let aiCommentaryEnabled = false;
+let performanceModeEnabled = false;
 let aiCommentaryTickId = null;
 let aiCommentaryRequestInFlight = false;
 let aiCommentaryEvents = [];
@@ -189,6 +193,10 @@ let aiCommentaryLastError = "";
 let aiCommentaryActiveModel = AI_COMMENTARY_MODEL_CANDIDATES[0].name;
 let aiCommentarySetupFailed = false;
 const effectProfileCache = new Map();
+const stageBadHitAnimationFrames = { firstId: null, secondId: null };
+const screenBadHitAnimationFrames = { firstId: null, secondId: null };
+const stageElementHitAnimationFrames = { firstId: null, secondId: null };
+const stageComboHitAnimationFrames = { firstId: null, secondId: null };
 
 initSettings();
 initializeStageDecor();
@@ -232,6 +240,7 @@ function startGame() {
   scoreEl.textContent = String(score);
   timeEl.textContent = String(remaining);
   messageEl.textContent = "泡をできるだけ多く割ろう";
+  lanePressureMessageState = "safe";
   resultTitleEl.textContent = "";
   resetComboState();
   hideResultScreen();
@@ -279,6 +288,7 @@ function endGame() {
     setAiCommentaryText(`AI総評: ${buildResultAiSummary(rank)}`);
   }
   resultTitleEl.textContent = `称号: ${rank}`;
+  lanePressureMessageState = "idle";
   showResultScreen(rank);
   playTone(330, 0.12, "triangle", 0.07);
 }
@@ -306,6 +316,7 @@ function backToTitle() {
   setStartOverlayVisible(true);
   setAiCommentaryText(aiCommentaryEnabled ? "タイトルへ戻りました。次の実況準備OK。" : "AI実況はOFFです。タイトル画面からONにできます。");
   resultTitleEl.textContent = "";
+  lanePressureMessageState = "idle";
   showTitleScreen();
 }
 
@@ -405,15 +416,17 @@ function spawnBubbleByType(isDangerBubble) {
     bubbleEl.style.setProperty("--element-label-color", palette.labelColor);
     bubbleEl.style.setProperty("--element-label-glow", palette.labelGlow);
 
-    const auraEl = document.createElement("span");
-    auraEl.className = "bubble-element-aura";
-    auraEl.setAttribute("aria-hidden", "true");
-    bubbleEl.appendChild(auraEl);
+    if (!performanceModeEnabled) {
+      const auraEl = document.createElement("span");
+      auraEl.className = "bubble-element-aura";
+      auraEl.setAttribute("aria-hidden", "true");
+      bubbleEl.appendChild(auraEl);
 
-    const flareEl = document.createElement("span");
-    flareEl.className = "bubble-element-flare";
-    flareEl.setAttribute("aria-hidden", "true");
-    bubbleEl.appendChild(flareEl);
+      const flareEl = document.createElement("span");
+      flareEl.className = "bubble-element-flare";
+      flareEl.setAttribute("aria-hidden", "true");
+      bubbleEl.appendChild(flareEl);
+    }
 
     const labelEl = document.createElement("span");
     labelEl.className = `bubble-element-label label-pattern-${pattern} label-enter-${pattern}`;
@@ -499,14 +512,35 @@ function clearBubblesWithoutScoring(exceptBubbleEl) {
   }
 }
 
+function restartAnimationClasses(targetEl, removeClasses, addClasses, frameState) {
+  if (!targetEl) {
+    return;
+  }
+
+  if (frameState.firstId !== null) {
+    cancelAnimationFrame(frameState.firstId);
+    frameState.firstId = null;
+  }
+
+  if (frameState.secondId !== null) {
+    cancelAnimationFrame(frameState.secondId);
+    frameState.secondId = null;
+  }
+
+  targetEl.classList.remove(...removeClasses);
+  frameState.firstId = requestAnimationFrame(() => {
+    frameState.firstId = null;
+    frameState.secondId = requestAnimationFrame(() => {
+      frameState.secondId = null;
+      targetEl.classList.add(...addClasses);
+    });
+  });
+}
+
 function triggerDangerHitEffect(bubbleEl, bubbleSize) {
   createDangerSplashEffect(bubbleEl, bubbleSize);
-  stageEl.classList.remove("stage-bad-hit");
-  document.body.classList.remove("screen-bad-hit");
-
-  void stageEl.offsetWidth;
-  stageEl.classList.add("stage-bad-hit");
-  document.body.classList.add("screen-bad-hit");
+  restartAnimationClasses(stageEl, ["stage-bad-hit"], ["stage-bad-hit"], stageBadHitAnimationFrames);
+  restartAnimationClasses(document.body, ["screen-bad-hit"], ["screen-bad-hit"], screenBadHitAnimationFrames);
 
   messageEl.textContent = "危険バブル! 泡が全部消えた...";
   playTone(220, 0.07, "square", 0.05);
@@ -708,9 +742,12 @@ function triggerElementHitEffect(hitProfile, bubbleEl) {
   stageEl.style.setProperty("--hit-x", hitX);
   stageEl.style.setProperty("--hit-y", hitY);
 
-  stageEl.classList.remove("stage-element-hit", ...stagePatternClasses);
-  void stageEl.offsetWidth;
-  stageEl.classList.add("stage-element-hit", patternClass);
+  restartAnimationClasses(
+    stageEl,
+    ["stage-element-hit", ...stagePatternClasses],
+    ["stage-element-hit", patternClass],
+    stageElementHitAnimationFrames
+  );
 
   if (stageElementHitTimeoutId !== null) {
     clearTimeout(stageElementHitTimeoutId);
@@ -844,6 +881,7 @@ function setLanePressure(nextRatio) {
   const widthPercent = lanePressureRatio * 100;
   const pressureStrength = lanePressureRatio / MAX_LANE_PRESSURE_RATIO;
   const wallOpacity = 0.16 + pressureStrength * 0.84;
+  const nextMessageState = lanePressureRatio > 0.01 ? "pressure" : "safe";
 
   if (!lanePressureLeftEl || !lanePressureRightEl) {
     return;
@@ -859,10 +897,13 @@ function setLanePressure(nextRatio) {
     recordAiCommentaryEvent("lane-pressure", { remaining });
   }
 
-  if (lanePressureRatio > 0.01) {
-    messageEl.textContent = "左右から壁が迫る! 中央レーンを狙おう";
-  } else if (running) {
-    messageEl.textContent = "泡をできるだけ多く割ろう";
+  if (running && nextMessageState !== lanePressureMessageState) {
+    if (nextMessageState === "pressure") {
+      messageEl.textContent = "左右から壁が迫る! 中央レーンを狙おう";
+    } else {
+      messageEl.textContent = "泡をできるだけ多く割ろう";
+    }
+    lanePressureMessageState = nextMessageState;
   }
 }
 
@@ -1003,9 +1044,7 @@ function triggerComboChainEffect(element, streak, bubbleEl, hitProfile) {
   stageEl.appendChild(badgeEl);
 
   stageEl.style.setProperty("--combo-hit-color", palette.labelGlow);
-  stageEl.classList.remove("stage-combo-hit");
-  void stageEl.offsetWidth;
-  stageEl.classList.add("stage-combo-hit");
+  restartAnimationClasses(stageEl, ["stage-combo-hit"], ["stage-combo-hit"], stageComboHitAnimationFrames);
 
   if (stageComboHitTimeoutId !== null) {
     clearTimeout(stageComboHitTimeoutId);
@@ -1360,10 +1399,17 @@ function initSettings() {
     aiCommentaryEnabled = storedAiCommentary === "true";
   }
 
+  const storedPerformanceMode = localStorage.getItem(PERFORMANCE_MODE_STORAGE_KEY);
+  if (storedPerformanceMode !== null) {
+    performanceModeEnabled = storedPerformanceMode === "true";
+  }
+
   nicknameInputEl.value = playerName;
   playerNameDisplayEl.textContent = playerName;
   updateSoundButtonLabel();
   updateAiCommentaryToggleLabel();
+  applyPerformanceMode();
+  updatePerformanceModeToggleLabel();
   setAiCommentaryStatusText();
 }
 
@@ -1412,6 +1458,17 @@ function toggleAiCommentary() {
   }
 }
 
+function applyPerformanceMode() {
+  document.body.classList.toggle("performance-lite", performanceModeEnabled);
+}
+
+function togglePerformanceMode() {
+  performanceModeEnabled = !performanceModeEnabled;
+  localStorage.setItem(PERFORMANCE_MODE_STORAGE_KEY, String(performanceModeEnabled));
+  applyPerformanceMode();
+  updatePerformanceModeToggleLabel();
+}
+
 function updateSoundButtonLabel() {
   soundToggleButtonEl.textContent = `効果音: ${soundEnabled ? "ON" : "OFF"}`;
 }
@@ -1419,6 +1476,11 @@ function updateSoundButtonLabel() {
 function updateAiCommentaryToggleLabel() {
   aiCommentaryToggleButtonEl.textContent = `AI実況: ${aiCommentaryEnabled ? "ON" : "OFF"}`;
   aiCommentaryToggleButtonEl.classList.toggle("is-active", aiCommentaryEnabled);
+}
+
+function updatePerformanceModeToggleLabel() {
+  performanceToggleButtonEl.textContent = `軽量モード: ${performanceModeEnabled ? "ON" : "OFF"}`;
+  performanceToggleButtonEl.classList.toggle("is-active", performanceModeEnabled);
 }
 
 function setAiCommentaryStatusText() {
@@ -1845,6 +1907,7 @@ nicknameInputEl.addEventListener("change", (event) => {
 });
 soundToggleButtonEl.addEventListener("click", toggleSound);
 aiCommentaryToggleButtonEl.addEventListener("click", toggleAiCommentary);
+performanceToggleButtonEl.addEventListener("click", togglePerformanceMode);
 retryFromResultButtonEl.addEventListener("click", retryFromResult);
 resultToTitleButtonEl.addEventListener("click", backToTitle);
 photoInputEl.addEventListener("change", handlePhotoInputChanged);
