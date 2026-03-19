@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bubble Pop</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section id="titleScreen" class="title-screen" aria-label="タイトル画面">
+        <div class="title-bubbles" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div class="title-card">
+          <h1 class="title-heading">Bubble Pop</h1>
+          <p class="title-copy">30秒で、気分を1段上げよう。</p>
+          <div class="title-controls" aria-label="プレイ設定">
+            <label class="nickname-label" for="nicknameInput">ニックネーム</label>
+            <input
+              id="nicknameInput"
+              class="nickname-input"
+              type="text"
+              maxlength="16"
+              placeholder="例: たろう"
+              autocomplete="nickname"
+            />
+            <button id="soundToggleButton" class="secondary-button" type="button">効果音: ON</button>
+            <p class="local-note">設定はこのブラウザだけに保存されます</p>
+          </div>
+          <ul class="title-rules" aria-label="遊び方">
+            <li>泡をクリックしてスコアを稼ぐ</li>
+            <li>制限時間は30秒</li>
+            <li>後半は左右からレーンが圧迫される</li>
+            <li>赤い危険バブルを押すと、泡が無得点で全消しされる</li>
+            <li>終了後はそのままリトライ可能</li>
+          </ul>
+          <button id="enterGameButton" class="title-button">ゲーム画面へ</button>
+        </div>
+      </section>
+
+      <section id="gameScreen" class="game-screen hidden" aria-label="ゲーム画面" aria-hidden="true">
+        <header class="hud">
+          <div class="pill">Player: <span id="playerNameDisplay">ゲスト</span></div>
+          <div class="pill">Score: <span id="score">0</span></div>
+          <div class="pill">Time: <span id="time">30</span>s</div>
+          <button id="backToTitleButton" class="secondary-button">Title</button>
+        </header>
+
+        <section id="stage" class="stage" aria-label="ゲームステージ"></section>
+        <div id="startOverlay" class="start-overlay" aria-hidden="false">
+          <button id="startButton" class="start-button" type="button">スタート</button>
+        </div>
+        <p id="message" class="message">Startを押してゲーム開始</p>
+        <p id="resultTitle" class="result-title" aria-live="polite"></p>
+
+        <section id="resultScreen" class="result-screen hidden" aria-label="結果画面" aria-hidden="true">
+          <div class="result-card">
+            <h2 class="result-heading">Result</h2>
+            <p class="result-summary"><span id="resultPlayer">ゲスト</span> のスコア</p>
+            <p class="result-score"><span id="resultScore">0</span></p>
+            <p class="result-rank">称号: <span id="resultRank">泡ビギナー</span></p>
+            <div class="result-actions">
+              <button id="retryFromResultButton" class="title-button" type="button">もう一回</button>
+              <button id="resultToTitleButton" class="secondary-button" type="button">タイトルへ戻る</button>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
